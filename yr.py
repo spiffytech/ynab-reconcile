@@ -1,29 +1,38 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 from __future__ import division
 import argparse
 import csv
 from datetime import datetime, timedelta
+import glob
+import os
 import re
 from pprint import pprint
 
-
 parser = argparse.ArgumentParser(description="Compare a YNAB register with Mint ledger")
+
 parser.add_argument("--ynab", help="Path to CSV containing YNAB register transactions")
+parser.add_argument("--ynab-dir", help="Path to folder containing YNAB register in CSV format. Looks at latest register file.")
+
 parser.add_argument("--mint", help="Path to CSV containing Mint ledger")
+parser.add_argument("--mint-dir", help="Path to folder containing Mint CSV exports. Looks at latest export.")
+
 parser.add_argument("--start-date", help="Path to CSV containing Mint ledger")
 
 args = parser.parse_args()
-if args.start_date:
-    start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
-else:
-    start_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
 
 def main():
-    ynab = Ynab(args.ynab)
-    mint = Mint(args.mint)
+    if args.start_date:
+        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
+    else:
+        start_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
+
+    ynab_file, mint_file = pick_files(args)
+    ynab = Ynab(ynab_file)
+    mint = Mint(mint_file)
 
     pair_transactions(ynab, mint)
+
     ynab.transactions = [t for t in ynab.transactions if t.date.date() >= start_date.date()]
     mint.transactions = [t for t in mint.transactions if t.date.date() >= start_date.date()]
 
@@ -34,6 +43,36 @@ def main():
     print separator
     mint.print_unmatched_transactions()
     print separator
+
+
+def pick_files(args):
+    if args.ynab_dir:
+        ynab_file = find_latest_ynab_file(args.ynab_dir)
+    else:
+        ynab_file = args.ynab
+    assert ynab_file
+
+    if args.mint_dir:
+        mint_file = find_latest_mint_file(args.mint_dir)
+    else:
+        mint_file = args.mint
+    assert mint_file
+
+
+    return (ynab_file, mint_file)
+
+
+def find_latest_ynab_file(dir_):
+    files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-Register.csv")))
+    return sorted(files)[-1]
+
+
+def find_latest_mint_file(dir_):
+    files = glob.glob(os.path.expanduser(os.path.join(dir_, "transactions*.csv")))
+    if len(files) == 1:
+        return files[0]
+
+    return sorted(files)[-2]  # "transactions (N).csv" sorts before "transactions.csv", se we want to return the second-to-last file in the sorted list
 
 
 def pair_transactions(a, b):
