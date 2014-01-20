@@ -47,32 +47,19 @@ def main():
 
 def pick_files(args):
     if args.ynab_dir:
-        ynab_file = find_latest_ynab_file(args.ynab_dir)
+        ynab_file = Ynab.find_latest_file(args.ynab_dir)
     else:
         ynab_file = args.ynab
     assert ynab_file
 
     if args.mint_dir:
-        mint_file = find_latest_mint_file(args.mint_dir)
+        mint_file = Mint.find_latest_file(args.mint_dir)
     else:
         mint_file = args.mint
     assert mint_file
 
 
     return (ynab_file, mint_file)
-
-
-def find_latest_ynab_file(dir_):
-    files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-Register.csv")))
-    return sorted(files)[-1]
-
-
-def find_latest_mint_file(dir_):
-    files = glob.glob(os.path.expanduser(os.path.join(dir_, "transactions*.csv")))
-    if len(files) == 1:
-        return files[0]
-
-    return sorted(files)[-2]  # "transactions (N).csv" sorts before "transactions.csv", se we want to return the second-to-last file in the sorted list
 
 
 def pair_transactions(a, b):
@@ -141,6 +128,12 @@ class Account(object):
 
 
 class Ynab(Account):
+    @staticmethod
+    def find_latest_file(dir_):
+        files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-Register.csv")))
+        return sorted(files)[-1]
+
+
     def __init__(self, filename):
         self.name = "YNAB" 
         self.transactions = []
@@ -194,6 +187,41 @@ class Ynab(Account):
 
 
 class Mint(Account):
+    @staticmethod
+    def find_latest_file(dir_):
+        files = glob.glob(os.path.expanduser(os.path.join(dir_, "transactions*.csv")))
+        if len(files) == 1:
+            return files[0]
+
+        def filename_cmp(a, b):
+            """Sorting function to compare Mint download files"""
+            def extract_num(file_):
+                """Extracts the download number from the filename. I.e., Chrome will download the second "transactions.csv" as "transactions (1).csv"."""
+                if file_ is None:
+                    return file_
+
+                match = re.match(r'transactions \((\d+)\).csv', os.path.basename(file_))
+                if match is not None:
+                    return int(match.group(1))
+                else:
+                    return None
+
+            num_a = extract_num(a)
+            num_b = extract_num(b)
+            if num_a is None and num_b is None:
+                return 0
+            if num_a is None:
+                return -1
+            if num_b is None:
+                return 1
+            else:
+                return num_a - num_b
+
+
+        files.sort(filename_cmp)
+        return files[-1]
+
+
     def __init__(self, filename):
         self.name = "Mint" 
         self.transactions = []
