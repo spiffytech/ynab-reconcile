@@ -193,32 +193,18 @@ class Mint(Account):
         if len(files) == 1:
             return files[0]
 
-        def filename_cmp(a, b):
-            """Sorting function to compare Mint download files"""
-            def extract_num(file_):
-                """Extracts the download number from the filename. I.e., Chrome will download the second "transactions.csv" as "transactions (1).csv"."""
-                if file_ is None:
-                    return file_
+        def extract_num(file_):
+            """Extracts the download number from the filename. I.e., Chrome will download the second "transactions.csv" as "transactions (1).csv"."""
+            if file_ is None:
+                return file_
 
-                match = re.match(r'transactions \((\d+)\).csv', os.path.basename(file_))
-                if match is not None:
-                    return int(match.group(1))
-                else:
-                    return None
-
-            num_a = extract_num(a)
-            num_b = extract_num(b)
-            if num_a is None and num_b is None:
-                return 0
-            if num_a is None:
-                return -1
-            if num_b is None:
-                return 1
+            match = re.match(r'transactions \((\d+)\).csv', os.path.basename(file_))
+            if match is not None:
+                return int(match.group(1))
             else:
-                return num_a - num_b
+                return None
 
-
-        files.sort(filename_cmp)
+        files.sort(key=extract_num)
         return files[-1]
 
 
