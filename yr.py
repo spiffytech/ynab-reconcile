@@ -76,16 +76,24 @@ def find_latest_mint_file(dir_):
 
 
 def pair_transactions(a, b):
+    # Implement O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
+    # Previously used a simple, but O(n^2), algorithm.
+    seen_transactions = {}
+
     for trans_a in a.transactions:
-        for trans_b in b.transactions:
-            if trans_a == trans_b and not trans_a.paired and not trans_b.paired:
-                trans_a.paired = trans_b
-                trans_b.paired = trans_a
+        for key in trans_a.hash_keys():
+            seen_transactions[key] = trans_a
+
+    for trans_b in b.transactions:
+        key = (trans_b.date.date(), trans_b.amount)
+        if key in seen_transactions and not seen_transactions[key].is_paired():
+            trans_b.pair(seen_transactions[key])
 
 
 class Transaction(object):
     def __init__(self, **kwargs):
         self.paired = False
+        self.timedelta = 5
         #self.date = kwargs["date"]
         #self.payee = kwargs["payee"]
         #self.category = kwargs["category"]
@@ -100,11 +108,29 @@ class Transaction(object):
         if not isinstance(other, Transaction):
             return False
 
-        return (self.date.date() <= other.date.date() <= self.date.date() + timedelta(days=5)) and (self.amount == other.amount)
+        return (self.date.date() <= other.date.date() <= self.date.date() + timedelta(days=self.timedelta)) and (self.amount == other.amount)
+
+
+    def hash_keys(self):
+        """Dict keys this transaction would match, for pairing purposes"""
+        keys = []
+        for d in (self.date.date() + timedelta(delta) for delta in range(self.timedelta+1)):
+            keys.append((d, self.amount))
+
+        return keys
 
 
     def __cmp__(self, other):
         return cmp(self.date.date(), other.date.date())
+
+
+    def pair(self, other):
+        self.paired = other
+        other.paired = self
+
+
+    def is_paired(self):
+        return self.paired is not False
 
 
 class Account(object):
