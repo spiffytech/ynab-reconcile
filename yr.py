@@ -88,7 +88,7 @@ class Transaction(object):
         #self.cleared = kwargs["cleared"]
 
     def __str__(self):
-        return "%s %s %s" % (self.date, self.amount, self.payee)
+        return "%s %s %s" % (self.date.strftime("%Y-%m-%d"), self.amount, self.payee)
 
 
     def __eq__(self, other):
@@ -123,7 +123,7 @@ class Transaction(object):
 class Account(object):
     def print_unmatched_transactions(self):
         for transaction in (t for t in self.transactions if t.paired == False):
-            print "%s - %s : %.2f (%s)" % (self.name, transaction.date, transaction.amount, transaction.payee)
+            print "%s - %s : %.2f (%s)" % (self.name, transaction.date.strftime("%Y-%m-%d"), transaction.amount, transaction.payee)
 
 
 

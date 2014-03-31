@@ -13,3 +13,5 @@ Point the program at the directories where your YNAB and Mint exports live. It'l
 You can also point it at a specific file:
 
 `./yr.py --ynab ~/ynab_export.csv --mint ~/Downloads/transactions.csv`
+
+You may also apply a start date parameter (`--start-date 2014-01-31`) to only show unmatched transactions starting on a certain date.
