@@ -65,16 +65,24 @@ def pick_files(args):
 def pair_transactions(a, b):
     # Implement O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
     # Previously used a simple, but O(n^2), algorithm.
+    # Treats (date, amount) as the key to look up transactions by
+    # Includes support for multiple transactions hashing to the same key (e.g., you buy two TV shows on Google Play for $2.14 on the same day)
     seen_transactions = {}
 
     for trans_a in a.transactions:
         for key in trans_a.hash_keys():
-            seen_transactions[key] = trans_a
+            if key not in seen_transactions:
+                seen_transactions[key] = []
+            seen_transactions[key].append(trans_a)
 
     for trans_b in b.transactions:
         key = (trans_b.date.date(), trans_b.amount)
-        if key in seen_transactions and not seen_transactions[key].is_paired():
-            trans_b.pair(seen_transactions[key])
+        if key not in seen_transactions:
+            continue
+        for transaction in seen_transactions[key]:
+            if not transaction.is_paired():
+                trans_b.pair(transaction)
+                break
 
 
 class Transaction(object):
