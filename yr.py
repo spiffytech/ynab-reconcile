@@ -159,7 +159,7 @@ class Ynab(Account):
                             break
                     break
 
-                trans.amount = round(trans.amount, 2)
+                trans.amount = round(trans.amount, 2)  # This fixes errors from adding numbers that can't be represented in binary and expecting them to equal one that can that came from Mint.
                 self.transactions.append(trans)
 
         self.transactions.sort()
@@ -198,7 +198,7 @@ class Mint(Account):
             if file_ is None:
                 return file_
 
-            match = re.match(r'transactions \((\d+)\).csv', os.path.basename(file_))
+            match = re.match(r'transactions ?\((\d+)\).csv', os.path.basename(file_))
             if match is not None:
                 return int(match.group(1))
             else:
