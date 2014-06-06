@@ -139,7 +139,7 @@ class Ynab(Account):
     @staticmethod
     def find_latest_file(dir_):
         files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-Register.csv")))
-        return sorted(files)[-1]
+        return sorted(files, key=os.path.getmtime)[-1]
 
 
     def __init__(self, filename):
@@ -174,7 +174,6 @@ class Ynab(Account):
         #pprint([(t.date, t.amount, t.payee) for t in self.transactions])
 
 
-
     def _process_row(self, row):
         trans = Transaction()
         trans.date = datetime.strptime(row["Date"], "%Y/%m/%d")
@@ -198,22 +197,7 @@ class Mint(Account):
     @staticmethod
     def find_latest_file(dir_):
         files = glob.glob(os.path.expanduser(os.path.join(dir_, "transactions*.csv")))
-        if len(files) == 1:
-            return files[0]
-
-        def extract_num(file_):
-            """Extracts the download number from the filename. I.e., Chrome will download the second "transactions.csv" as "transactions (1).csv"."""
-            if file_ is None:
-                return file_
-
-            match = re.match(r'transactions ?\((\d+)\).csv', os.path.basename(file_))
-            if match is not None:
-                return int(match.group(1))
-            else:
-                return None
-
-        files.sort(key=extract_num)
-        return files[-1]
+        return sorted(files, key=os.path.getmtime)[-1]
 
 
     def __init__(self, filename):
