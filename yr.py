@@ -63,7 +63,7 @@ def pick_files(args):
 
 
 def pair_transactions(a, b):
-    # Implement O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
+    # This is an O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
     # Previously used a simple, but O(n^2), algorithm.
     # Treats (date, amount) as the key to look up transactions by
     # Includes support for multiple transactions hashing to the same key (e.g., you buy two TV shows on Google Play for $2.14 on the same day)
@@ -89,11 +89,11 @@ class Transaction(object):
     def __init__(self, **kwargs):
         self.paired = False
         self.timedelta = 5
-        #self.date = kwargs["date"]
-        #self.payee = kwargs["payee"]
-        #self.category = kwargs["category"]
-        #self.amount = kwargs["amount"]
-        #self.cleared = kwargs["cleared"]
+        self.cleared = None  # Lets us skip printing cleared transactions as
+                             # unmatched when we get reissued a new card that
+                             # doesn't have all of the old transactions on it
+                             # that our register includes, since we don't create
+                             # new registers for new issuances of the same card
 
     def __str__(self):
         return "%s %s %s" % (self.date.strftime("%Y-%m-%d"), self.amount, self.payee)
@@ -130,7 +130,7 @@ class Transaction(object):
 
 class Account(object):
     def print_unmatched_transactions(self):
-        for transaction in (t for t in self.transactions if t.paired == False):
+        for transaction in (t for t in self.transactions if t.paired is False and t.cleared is not True):  # Must check for cleared to be either False and None.
             print "%s - %s : %.2f (%s)" % (self.name, transaction.date.strftime("%Y-%m-%d"), transaction.amount, transaction.payee)
 
 
@@ -179,6 +179,7 @@ class Ynab(Account):
         trans.date = datetime.strptime(row["Date"], "%Y/%m/%d")
         trans.payee = row["Payee"]
         trans.category = row["Category"]
+        trans.cleared = row["Cleared"] == "C"  # C/U Cleared/Uncleared
 
         debit = float(row["Outflow"].strip("$"))
         if debit != 0:
