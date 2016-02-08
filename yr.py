@@ -131,7 +131,7 @@ class Transaction(object):
 class Account(object):
     def print_unmatched_transactions(self):
         for transaction in (t for t in self.transactions if t.paired is False and t.cleared is not True):  # Must check for cleared to be either False and None.
-            print "%s - %s : %.2f (%s)" % (self.name, transaction.date.strftime("%Y-%m-%d"), transaction.amount, transaction.payee)
+            print "%s - %s : %+.2f (%s)" % (self.name, transaction.date.strftime("%Y-%m-%d"), transaction.amount, transaction.payee)
 
 
 
