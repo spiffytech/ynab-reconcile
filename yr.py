@@ -176,7 +176,7 @@ class Ynab(Account):
 
     def _process_row(self, row):
         trans = Transaction()
-        trans.date = datetime.strptime(row["Date"], "%Y/%m/%d")
+        trans.date = datetime.strptime(row["Date"], "%m/%d/%Y")
         trans.payee = row["Payee"]
         trans.category = row["Category"]
         trans.cleared = row["Cleared"] == "C"  # C/U Cleared/Uncleared
