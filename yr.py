@@ -63,7 +63,7 @@ def pick_files(args):
 
 
 def pair_transactions(a, b):
-    # This is an O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
+    # This is an O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction.
     # Previously used a simple, but O(n^2), algorithm.
     # Treats (date, amount) as the key to look up transactions by
     # Includes support for multiple transactions hashing to the same key (e.g., you buy two TV shows on Google Play for $2.14 on the same day)
@@ -143,7 +143,7 @@ class Ynab(Account):
 
 
     def __init__(self, filename):
-        self.name = "YNAB" 
+        self.name = "YNAB"
         self.transactions = []
 
         with open(filename) as register:
@@ -151,7 +151,7 @@ class Ynab(Account):
             for row in dr:
                 trans = self._process_row(row)
                 while True:  # Merge split transactions into a single transaction
-                    regex = r'\(Split ([0-9]+)/([0-9]+)\)'
+                    regex = r'Split \(([0-9]+)/([0-9]+)\)'
                     match = re.match(regex, row["Memo"])
                     if not match:
                         break
@@ -176,7 +176,7 @@ class Ynab(Account):
 
     def _process_row(self, row):
         trans = Transaction()
-        trans.date = datetime.strptime(row["Date"], "%Y/%m/%d")
+        trans.date = datetime.strptime(row["Date"], "%m/%d/%Y")
         trans.payee = row["Payee"]
         trans.category = row["Category"]
         trans.cleared = row["Cleared"] == "C"  # C/U Cleared/Uncleared
@@ -202,13 +202,13 @@ class Mint(Account):
 
 
     def __init__(self, filename):
-        self.name = "Mint" 
+        self.name = "Mint"
         self.transactions = []
 
         with open(filename) as ledger:
             dr = csv.DictReader(ledger)
             for row in dr:
-                trans = self._process_row(row)           
+                trans = self._process_row(row)
 
                 self.transactions.append(trans)
 
