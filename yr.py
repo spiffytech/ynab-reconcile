@@ -151,7 +151,7 @@ class Ynab(Account):
             for row in dr:
                 trans = self._process_row(row)
                 while True:  # Merge split transactions into a single transaction
-                    regex = r'\(Split ([0-9]+)/([0-9]+)\)'
+                    regex = r'Split \(([0-9]+)/([0-9]+)\)'
                     match = re.match(regex, row["Memo"])
                     if not match:
                         break
