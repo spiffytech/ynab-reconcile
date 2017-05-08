@@ -63,7 +63,7 @@ def pick_files(args):
 
 
 def pair_transactions(a, b):
-    # This is an O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction. 
+    # This is an O(2N) algorithm using dictionary keys for O(1) check for existance of a matching transaction.
     # Previously used a simple, but O(n^2), algorithm.
     # Treats (date, amount) as the key to look up transactions by
     # Includes support for multiple transactions hashing to the same key (e.g., you buy two TV shows on Google Play for $2.14 on the same day)
@@ -143,7 +143,7 @@ class Ynab(Account):
 
 
     def __init__(self, filename):
-        self.name = "YNAB" 
+        self.name = "YNAB"
         self.transactions = []
 
         with open(filename) as register:
@@ -202,13 +202,13 @@ class Mint(Account):
 
 
     def __init__(self, filename):
-        self.name = "Mint" 
+        self.name = "Mint"
         self.transactions = []
 
         with open(filename) as ledger:
             dr = csv.DictReader(ledger)
             for row in dr:
-                trans = self._process_row(row)           
+                trans = self._process_row(row)
 
                 self.transactions.append(trans)
 
