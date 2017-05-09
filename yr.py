@@ -8,6 +8,7 @@ import glob
 import os
 import re
 from pprint import pprint
+import dateutil.parser
 
 parser = argparse.ArgumentParser(description="Compare a YNAB register with Mint ledger")
 
@@ -23,9 +24,9 @@ args = parser.parse_args()
 
 def main():
     if args.start_date:
-        start_date = datetime.strptime(args.start_date, "%Y-%m-%d")
+        start_date = dateutil.parser.parse(args.start_date)
     else:
-        start_date = datetime.strptime("1970-01-01", "%Y-%m-%d")
+        start_date = dateutil.parser.parse("1970-01-01")
 
     ynab_file, mint_file = pick_files(args)
     ynab = Ynab(ynab_file)
@@ -176,7 +177,7 @@ class Ynab(Account):
 
     def _process_row(self, row):
         trans = Transaction()
-        trans.date = datetime.strptime(row["Date"], "%m/%d/%Y")
+        trans.date = dateutil.parser.parse(row["Date"])
         trans.payee = row["Payee"]
         trans.category = row["Category"]
         trans.cleared = row["Cleared"] == "C"  # C/U Cleared/Uncleared
@@ -218,7 +219,7 @@ class Mint(Account):
 
     def _process_row(self, row):
         trans = Transaction()
-        trans.date = datetime.strptime(row["Date"], "%m/%d/%Y")
+        trans.date = dateutil.parser.parse(row["Date"])
         trans.payee = row["Description"]
         trans.raw_payee = row["Original Description"]
         trans.category = row["Category"]
