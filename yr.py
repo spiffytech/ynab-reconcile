@@ -20,6 +20,8 @@ parser.add_argument("--mint-dir", help="Path to folder containing Mint CSV expor
 
 parser.add_argument("--start-date", help="Path to CSV containing Mint ledger")
 
+parser.add_argument("--account", help="Text name of YNAB account to filter for")
+
 args = parser.parse_args()
 
 def main():
@@ -29,12 +31,14 @@ def main():
         start_date = dateutil.parser.parse("1970-01-01")
 
     ynab_file, mint_file = pick_files(args)
-    ynab = Ynab(ynab_file)
+    ynab = Ynab(ynab_file, args.account or None)
     mint = Mint(mint_file)
+
+    first_bank_transaction = mint.transactions[0]
 
     pair_transactions(ynab, mint)
 
-    ynab.transactions = [t for t in ynab.transactions if t.date.date() >= start_date.date()]
+    ynab.transactions = [t for t in ynab.transactions if t.date.date() >= start_date.date() and t.date.date() >= first_bank_transaction.date.date()]
     mint.transactions = [t for t in mint.transactions if t.date.date() >= start_date.date()]
 
     separator = "------------------------------------"
@@ -53,10 +57,10 @@ def pick_files(args):
         ynab_file = args.ynab
     assert ynab_file
 
-    if args.mint_dir:
-        mint_file = Mint.find_latest_file(args.mint_dir)
-    else:
+    if args.mint:
         mint_file = args.mint
+    else:
+        mint_file = Mint.find_latest_file(args.mint_dir)
     assert mint_file
 
 
@@ -131,7 +135,8 @@ class Transaction(object):
 
 class Account(object):
     def print_unmatched_transactions(self):
-        for transaction in (t for t in self.transactions if t.paired is False and t.cleared is not True):  # Must check for cleared to be either False and None.
+        #for transaction in (t for t in self.transactions if t.paired is False and t.cleared is not True):  # Must check for cleared to be either False and None.
+        for transaction in (t for t in self.transactions if t.paired is False):  # Must check for cleared to be either False and None.
             print "%s - %s : %+.2f (%s)" % (self.name, transaction.date.strftime("%Y-%m-%d"), transaction.amount, transaction.payee)
 
 
@@ -139,11 +144,11 @@ class Account(object):
 class Ynab(Account):
     @staticmethod
     def find_latest_file(dir_):
-        files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-Register.csv")))
+        files = glob.glob(os.path.expanduser(os.path.join(dir_, "My Budget as of *-*Register.csv")))
         return sorted(files, key=os.path.getmtime)[-1]
 
 
-    def __init__(self, filename):
+    def __init__(self, filename, account=None):
         self.name = "YNAB"
         self.transactions = []
 
@@ -151,6 +156,11 @@ class Ynab(Account):
             dr = csv.DictReader(register)
             for row in dr:
                 trans = self._process_row(row)
+
+                # Filter for only the specified account. Thanks, New YNAB.
+                if account and trans.account != account:
+                    continue
+
                 while True:  # Merge split transactions into a single transaction
                     regex = r'Split \(([0-9]+)/([0-9]+)\)'
                     match = re.match(regex, row["Memo"])
@@ -181,6 +191,7 @@ class Ynab(Account):
         trans.payee = row["Payee"]
         trans.category = row["Category"]
         trans.cleared = row["Cleared"] == "C"  # C/U Cleared/Uncleared
+        trans.account = row['\xef\xbb\xbf"Account"']
 
         debit = float(row["Outflow"].strip("$"))
         if debit != 0:
