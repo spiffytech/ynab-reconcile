@@ -15,3 +15,5 @@ You can also point it at a specific file:
 `./yr.py --ynab ~/ynab_export.csv --mint ~/Downloads/transactions.csv`
 
 You may also apply a start date parameter (`--start-date 2014-01-31`) to only show unmatched transactions starting on a certain date.
+
+For New YNAB support, which exports all accounts to the same file, you may prepend the `account <account name>` argument to only get matches for the specified account.
